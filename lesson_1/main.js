@@ -286,6 +286,7 @@ function getDirectionalLight(intensity) {
 	// increase shdow resolution
 	light.shadow.mapSize.width = 4096;
 	light.shadow.mapSize.height = 4096;
+	light.shadow.bias = .0001;
 
 	return light;
 }

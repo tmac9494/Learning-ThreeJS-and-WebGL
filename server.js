@@ -7,8 +7,26 @@ app.use(express.static(`${__dirname}`))
 app.use('/assets', express.static(`${__dirname}/assets/`));
 app.use('/lib', express.static(`${__dirname}/lib/`))
  
-app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname, 'chapter-01/01_02/begin', 'index.html'))
+// app.get('/', function (req, res) {
+//   res.sendFile(path.join(__dirname, 'chapter-01/01_02/begin', 'index.html'))
+// })
+app.get('/l-1', function (req, res) {
+  res.sendFile(path.join(__dirname, 'lesson_1', 'index.html'))
+})
+app.get('/l-1-fc', function (req, res) {
+  res.sendFile(path.join(__dirname, 'lesson_1', 'index-fc.html'))
+})
+app.get('/l-2', function (req, res) {
+  res.sendFile(path.join(__dirname, 'lesson_2', 'index.html'))
+})
+app.get('/l-3', function(req, res) {
+	res.sendFile(path.join(__dirname, 'lesson_3', 'index.html'))
+})
+app.get('/l-3-2', function(req, res) {
+	res.sendFile(path.join(__dirname, 'lesson_3/2', 'index.html'))
+})
+app.get('/l-3-3', function(req, res) {
+	res.sendFile(path.join(__dirname, 'lesson_3/3', 'index.html'))
 })
  
 app.listen(3010);

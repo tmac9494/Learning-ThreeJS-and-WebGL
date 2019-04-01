@@ -48,14 +48,14 @@ function init() {
 
 // ------------------------------------------------------------------- Objects -------------------
 	//  plane
-	let plane = getPlane(100);
+	const plane = getPlane(100);
 	plane.rotation.x = Math.PI / 2; // - 90 degree rotation in 3d space
 	plane.name = 'plane-1';
 
 	// box
 	// var box = getBox(1, 1, 1);
 	// box.position.y = box.geometry.parameters.height / 2; // - adjust box positoin to be on top of the plane
-	let boxGrid = getBoxGrid(20, 2.5);
+	const boxGrid = getBoxGrid(20, 2.5);
 	boxGrid.name = 'box-grid';
 
 
@@ -106,70 +106,70 @@ function init() {
 	// )
 
 	// ---------- Static Camera
-	// camera.position.x = 10;
-	// camera.position.y = 18;
-	// camera.position.z = -18;
-	// camera.lookAt(new THREE.Vector3(0, 0, 0))
+	camera.position.x = 10;
+	camera.position.y = 18;
+	camera.position.z = -18;
+	camera.lookAt(new THREE.Vector3(0, 0, 0))
 
 // ------------------------------------------- Animated Camera
 	// example of animating camera using an "animation rig" to make the animations more manageable
-	let cameraZPosition = new THREE.Group();
-	let cameraYPosition = new THREE.Group();
-	let cameraYRotation = new THREE.Group();
-	let cameraZRotation = new THREE.Group();
-	let cameraXRotation = new THREE.Group();
+	// let cameraZPosition = new THREE.Group();
+	// let cameraYPosition = new THREE.Group();
+	// let cameraYRotation = new THREE.Group();
+	// let cameraZRotation = new THREE.Group();
+	// let cameraXRotation = new THREE.Group();
 
-	cameraZRotation.name = 'cameraZRotation';
-	cameraZPosition.name = 'cameraZPosition';
-	cameraYPosition.name = 'cameraYPosition';
-	cameraYRotation.name = 'cameraYRotation';
-	cameraXRotation.name = 'cameraXRotation';
+	// cameraZRotation.name = 'cameraZRotation';
+	// cameraZPosition.name = 'cameraZPosition';
+	// cameraYPosition.name = 'cameraYPosition';
+	// cameraYRotation.name = 'cameraYRotation';
+	// cameraXRotation.name = 'cameraXRotation';
 
-	cameraXRotation.rotation.x = -Math.PI / 2;
-	cameraYPosition.position.y = 1;
-	cameraZPosition.position.z = 100;
+	// cameraXRotation.rotation.x = -Math.PI / 2;
+	// cameraYPosition.position.y = 1;
+	// cameraZPosition.position.z = 100;
 
-	new TWEEN.Tween({val: 100})
-		.to({val: -50}, 12000)
-		.onUpdate(function() {
-			cameraZPosition.position.z = this.val;
-		})
-		.start();
+	// new TWEEN.Tween({val: 100})
+	// 	.to({val: -50}, 12000)
+	// 	.onUpdate(function() {
+	// 		cameraZPosition.position.z = this.val;
+	// 	})
+	// 	.start();
 
-	new TWEEN.Tween({val: -Math.PI / 2})
-		.to({val: 0}, 6000)
-		.delay(1000)
-		.easing(TWEEN.Easing.Quadratic.InOut)
-		.onUpdate(function() {
-			cameraXRotation.rotation.x = this.val;
-		})
-		.start();
+	// new TWEEN.Tween({val: -Math.PI / 2})
+	// 	.to({val: 0}, 6000)
+	// 	.delay(1000)
+	// 	.easing(TWEEN.Easing.Quadratic.InOut)
+	// 	.onUpdate(function() {
+	// 		cameraXRotation.rotation.x = this.val;
+	// 	})
+	// 	.start();
 
-	new TWEEN.Tween({val: 0})
-		.to({val: Math.PI/2}, 6000)
-		.delay(1000)
-		.easing(TWEEN.Easing.Quadratic.InOut)
-		.onUpdate(function() {
-			cameraYRotation.rotation.y = this.val;
-		})
-		.start();
+	// new TWEEN.Tween({val: 0})
+	// 	.to({val: Math.PI/2}, 6000)
+	// 	.delay(1000)
+	// 	.easing(TWEEN.Easing.Quadratic.InOut)
+	// 	.onUpdate(function() {
+	// 		cameraYRotation.rotation.y = this.val;
+	// 	})
+	// 	.start();
 
-	// group camera controllers together and add to scene
-	cameraZRotation.add(camera);
-	cameraYPosition.add(cameraZRotation);
-	cameraZPosition.add(cameraYPosition);
-	cameraXRotation.add(cameraZPosition);
-	cameraYRotation.add(cameraXRotation);
-	scene.add(cameraYRotation);
+	// // group camera controllers together and add to scene
+	// cameraZRotation.add(camera);
+	// cameraYPosition.add(cameraZRotation);
+	// cameraZPosition.add(cameraYPosition);
+	// cameraXRotation.add(cameraZPosition);
+	// cameraYRotation.add(cameraXRotation);
+	// scene.add(cameraYRotation);
 
 
 
-	// --- anim cmaera gui controls
-	gui.add(cameraZPosition.position, 'z', 0, 100);
-	 // -- use pi for radians instead of degrees
-	gui.add(cameraXRotation.rotation, 'x', -Math.PI, Math.PI);
-	gui.add(cameraYRotation.rotation, 'y', -Math.PI, Math.PI);
-	gui.add(cameraZRotation.rotation, 'z', -Math.PI, Math.PI);
+	// // --- anim cmaera gui controls
+	// gui.add(cameraZPosition.position, 'z', 0, 100);
+	//  // -- use pi for radians instead of degrees
+	// gui.add(cameraXRotation.rotation, 'x', -Math.PI, Math.PI);
+	// gui.add(cameraYRotation.rotation, 'y', -Math.PI, Math.PI);
+	// gui.add(cameraZRotation.rotation, 'z', -Math.PI, Math.PI);
 //animated camera
 
 
@@ -203,17 +203,17 @@ function getBox(w, h, d) {
 }
 
 function getBoxGrid(amount, seperationMuliplier) {
-	let group = new THREE.Group(); // three group is like html div(container)
+	const group = new THREE.Group(); // three group is like html div(container)
 
 	for (let i = 0;i<amount;i++) {
 		// create box and set its position based on place in loop
-		let obj = getBox(1, 3, 1);
+		const obj = getBox(1, 3, 1);
 		obj.position.x = i * seperationMuliplier;
 		obj.position.y = obj.geometry.parameters.height / 2;
 		group.add(obj);
 		// create the rows of blocks
 		for (let j = 1;j<amount;j++) {
-			let obj = getBox(1, 3, 1);
+			const obj = getBox(1, 3, 1);
 			obj.position.x = i * seperationMuliplier;
 			obj.position.y = obj.geometry.parameters.height / 2;
 			obj.position.z = j * seperationMuliplier;
@@ -223,6 +223,7 @@ function getBoxGrid(amount, seperationMuliplier) {
 
 	group.position.x = -(seperationMuliplier * (amount - 1)) / 2;
 	group.position.z = -(seperationMuliplier * (amount - 1)) / 2;
+
 	return group;
 }
 
@@ -282,6 +283,7 @@ function getDirectionalLight(intensity) {
 	light.shadow.camera.right = 60;
 	light.shadow.camera.bottom = -60;
 	light.shadow.camera.top = 60;
+	light.shadow.bias = .0001;
 
 	// increase shdow resolution
 	light.shadow.mapSize.width = 4096;
@@ -312,10 +314,10 @@ function update(renderer, scene, camera, controls, clock) {
 	// let cameraXRotation = scene.getObjectByName('cameraXRotation');
 	// let cameraYRotation = scene.getObjectByName('cameraYRotation');
 	// let cameraZPosition = scene.getObjectByName('cameraZPosition');
-	let cameraZRotation = scene.getObjectByName('cameraZRotation');
+	// let cameraZRotation = scene.getObjectByName('cameraZRotation');
 
 	// cameraZPosition.position.z -= 0.25;
-	cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.05;
+	// cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.05;
 	// if (cameraXRotation.rotation.x < 0) {
 	// 	cameraXRotation.rotation.x += .01;
 	// }
@@ -328,7 +330,7 @@ function update(renderer, scene, camera, controls, clock) {
 		// ---- noise
 		// let x = timeElapsed * 2.5 + index; //-------- faster by multiplier example 
 		let x = timeElapsed + index;
-		child.scale.y = (noise.simplex2(x, x) + 1) / 2 + .001; 
+		child.scale.y = (noise.simplex2(x, x) + 1) / 2 + .001;
 
 		// ---- sine
 		// child.scale.y = (Math.sin(timeElapsed * 5 + index) + 1) / 2 + .001; 
