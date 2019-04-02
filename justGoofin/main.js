@@ -37,6 +37,8 @@
 
 function init() {
 	let scene = new THREE.Scene(); // ------ scene
+	const perfStats = new Stats();
+	document.body.appendChild(perfStats.dom);
 	const gui = new dat.GUI();
 	const clock = new THREE.Clock();
 
@@ -182,7 +184,7 @@ function init() {
 	// orbit controls
 	var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-	update(renderer, scene, camera, controls, clock)
+	update(renderer, scene, camera, controls, clock, perfStats);
 
 
 
@@ -204,11 +206,11 @@ window.addEventListener('keydown', (e) => {
     // requestAnimationFrame(() => {
 	    if (e.keyCode == '38') {
 	        // up arrow
-	        camChange.position = 1;
+	        camChange.position = -1;
 	    }
 	    else if (e.keyCode == '40') {
 	        // down arrow
-	        camChange.position = -1;
+	        camChange.position = 1;
 	    }
 	    else if (e.keyCode == '37') {
 	       // left arrow
@@ -257,13 +259,13 @@ function getBoxGrid(amount, seperationMuliplier, reflection) {
 
 	for (let i = 0;i<amount;i++) {
 		// create box and set its position based on place in loop
-		const obj = getBox(1, 3, 1, reflection);
+		const obj = getBox(1, 2, 1, reflection);
 		obj.position.x = i * seperationMuliplier;
 		obj.position.y = obj.geometry.parameters.height / 2;
 		group.add(obj);
 		// create the rows of blocks
 		for (let j = 1;j<amount;j++) {
-			const obj = getBox(1, 3, 1, reflection);
+			const obj = getBox(1, 2, 1, reflection);
 			obj.position.x = i * seperationMuliplier;
 			obj.position.y = obj.geometry.parameters.height / 2;
 			obj.position.z = j * seperationMuliplier;
@@ -284,6 +286,7 @@ function getSphere(size) {
 	let material = new THREE.MeshBasicMaterial({
 		color: 'rgb(255, 255, 255)'
 	});
+	material.fog = false;
 	let mesh = new THREE.Mesh(
 		geometry,
 		material
@@ -304,7 +307,8 @@ function getPlane(size, reflection) {
 	material.map = loader.load('/assets/textures/purp-tiled-floor-2.png');
 	material.bumpMap = loader.load('/assets/textures/purp-tiled-floor-2.png');
 	material.roughnessMap = loader.load('/assets/textures/purp-tiled-floor-2.png');
-	material.bumpScale = 0.12;
+	material.bumpScale = 0.1;
+	material.normalScale = 
 	material.envMap = reflection;
 	material.envMapIntensity = .5;
 	material.metalness = .3;
@@ -316,6 +320,7 @@ function getPlane(size, reflection) {
 		const texture = material[mapName];
 		texture.wrapS = THREE.RepeatWrapping;
 		texture.wrapT = THREE.RepeatWrapping;
+		texture.min = THREE.LinearFilterNearestFilter;
 		texture.repeat.set(60, 60);
 	})
 	let mesh = new THREE.Mesh(
@@ -368,11 +373,8 @@ function getAmbientLight(intensity) {
 
 
 // continous render
-function update(renderer, scene, camera, controls, clock) {
-	renderer.render(
-		scene,
-		camera
-	)
+function update(renderer, scene, camera, controls, clock, stats) {
+	renderer.render(scene, camera);
 
 	let timeElapsed = clock.getElapsedTime();
 	let boxGrid = scene.getObjectByName('box-grid');
@@ -385,15 +387,16 @@ function update(renderer, scene, camera, controls, clock) {
 	let cameraZPosition = scene.getObjectByName('cameraZPosition');
 	let cameraZRotation = scene.getObjectByName('cameraZRotation');
 	if (keyListener && camChange.position !== 0) {
-		cameraZPosition.position.z += (camChange.position > 0 ? .1 : -.1);
+		cameraZPosition.translateZ(camChange.position === 1 ? .12 : -.12);
 		camChange.position = 0;
+		cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.007;
 	}
 	if (keyListener && camChange.rotation !== 0) {
 		if (
 			cameraZPosition.rotation.y <= -6 ||
 			cameraZPosition.rotation.y >= 6 
 		) cameraZPosition.rotation.y = 0;  
-		else cameraZPosition.rotation.y += (camChange.rotation > 0 ? Math.PI/60 : -Math.PI/60);
+		else cameraZPosition.rotation.y += (camChange.rotation === 1 ? Math.PI/60 : -Math.PI/60);
 		camChange.rotation = 0;
 	}
 
@@ -412,7 +415,10 @@ function update(renderer, scene, camera, controls, clock) {
 		// let x = timeElapsed * 2.5 + index; //-------- faster by multiplier example 
 		let x = timeElapsed * .3 + index;
 		child.scale.y = (noise.simplex2(x, x) + 1) / 2 + .001;
-		if (child.scale.y > .9) child.material.emissive = {r: 0, g: 1, b:1};
+		child.position.y = child.scale.y/2 * child.geometry.parameters.height; // keep object on top of plane
+		if (child.scale.y > .9) { 
+			child.material.emissive = {r: 0, g: 1, b:1};
+		}
 		else child.material.emissive = {r: null, g: null, b:null};
 		// ---- sine
 		// child.scale.y = (Math.sin(timeElapsed * 5 + index) + 1) / 2 + .001; 
@@ -422,15 +428,16 @@ function update(renderer, scene, camera, controls, clock) {
 			// adding index to sin param makes each box use a different piece of the sin curve to prevent uniformity 
 
 
-		child.position.y = child.scale.y / 2; // -- keeps the animating boxes on top of the plane
+		// child.position.y = child.scale.y / 2; // -- keeps the animating boxes on top of the plane
 	})
 //box grid
 
 	controls.update();
+	stats.update();
 	TWEEN.update();
 
-	requestAnimationFrame(() => {
-		update(renderer, scene, camera, controls, clock);
+	requestAnimationFrame(function() {
+		update(renderer, scene, camera, controls, clock, stats);
 	})
 }
 

@@ -28,6 +28,16 @@ app.get('/l-3-2', function(req, res) {
 app.get('/l-3-3', function(req, res) {
 	res.sendFile(path.join(__dirname, 'lesson_3/3', 'index.html'))
 })
+app.get('/l-4-1', function(req, res) {
+	res.sendFile(path.join(__dirname, 'lesson_4', 'index.html'))
+})
+app.get('/l-4-2', function(req, res) {
+	res.sendFile(path.join(__dirname, 'lesson_4/2', 'index.html'))
+})
+app.get('/l-5', function(req, res) {
+	res.sendFile(path.join(__dirname, 'lesson_5', 'index.html'))
+})
+
 app.get('/just-goofin', function(req, res) {
 	res.sendFile(path.join(__dirname, 'justGoofin', 'index.html'))
 })
