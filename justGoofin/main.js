@@ -42,11 +42,11 @@ function init() {
 
 // --------------------------------------------------- Fog
 	let enableFog = true;
-	if (enableFog) { scene.fog = new THREE.FogExp2('#222045', 0.05); }
+	if (enableFog) { scene.fog = new THREE.FogExp2('#000222', 0.05); }
 
 
-	const path = '/assets/cubemap/space/';
-	const format = '.jpg';
+	const path = '/assets/cubemap/space-ltblue/';
+	const format = '.png';
 	const urls = [
 		path + 'px' + format, path + 'nx' + format,
 		path + 'py' + format, path + 'ny' + format,
@@ -60,10 +60,14 @@ function init() {
 
 
 // ------------------------------------------------------------------- Objects -------------------
+
+
+
 	//  plane
 	const plane = getPlane(100, reflectionCube);
 	plane.rotation.x = Math.PI / 2; // - 90 degree rotation in 3d space
 	plane.name = 'plane-1';
+
 
 	// box
 	// var box = getBox(1, 1, 1);
@@ -192,36 +196,35 @@ function init() {
 
 
 
-let camChange = {position:0,rotation:0}
-
-
-
-
-
-
-
+let camChange = {position:0,rotation:0, key:null}
+let keyListener = false;
 window.addEventListener('keydown', (e) => {
+	keyListener = true;
     e = e || window.event;
     // requestAnimationFrame(() => {
 	    if (e.keyCode == '38') {
 	        // up arrow
-	        camChange.position = .25;
+	        camChange.position = 1;
 	    }
 	    else if (e.keyCode == '40') {
 	        // down arrow
-	        camChange.position = -.25;
+	        camChange.position = -1;
 	    }
 	    else if (e.keyCode == '37') {
 	       // left arrow
-	       camChange.rotation = Math.PI/20;
+	       camChange.rotation = 1;
 	    }
 	    else if (e.keyCode == '39') {
 	       // right arrow
-	       camChange.rotation = -Math.PI/20;
+	       camChange.rotation = -1;
 	    }
+
 	// })
 
 });
+window.addEventListener('keyup', (e) => {
+	keyListener = false;
+})
 
 
 
@@ -291,16 +294,30 @@ function getSphere(size) {
 
 // build plane
 function getPlane(size, reflection) {
+	const loader = new THREE.TextureLoader();
 	// create box
 	let geometry = new THREE.PlaneGeometry(size, size);
-	let material = new THREE.MeshPhongMaterial({
+	let material = new THREE.MeshStandardMaterial({
 		color: 'rgb(255, 255, 255)',
 		side: THREE.DoubleSide
 	});
+	material.map = loader.load('/assets/textures/purp-tiled-floor-2.png');
+	material.bumpMap = loader.load('/assets/textures/purp-tiled-floor-2.png');
+	material.roughnessMap = loader.load('/assets/textures/purp-tiled-floor-2.png');
+	material.bumpScale = 0.12;
 	material.envMap = reflection;
-	material.envMapIntensity = 1;
-	material.metalness = .001;
+	material.envMapIntensity = .5;
+	material.metalness = .3;
 	material.roughness = .4;
+	material.wrapS = THREE.RepeatWrapping;
+	material.wrapT = THREE.RepeatWrapping;
+	const maps = ['map', 'bumpMap', 'roughnessMap']
+	maps.forEach(mapName => {
+		const texture = material[mapName];
+		texture.wrapS = THREE.RepeatWrapping;
+		texture.wrapT = THREE.RepeatWrapping;
+		texture.repeat.set(60, 60);
+	})
 	let mesh = new THREE.Mesh(
 		geometry,
 		material
@@ -328,7 +345,7 @@ function getSpotLight(intensity) {
 }
 // build directional light
 function getDirectionalLight(intensity) {
-	var light = new THREE.DirectionalLight('#418a44', intensity);
+	var light = new THREE.DirectionalLight('#32cd32', intensity);
 	light.castShadow = true;
 	light.shadow.camera.left = -60;
 	light.shadow.camera.right = 60;
@@ -367,17 +384,16 @@ function update(renderer, scene, camera, controls, clock) {
 	let cameraYRotation = scene.getObjectByName('cameraYRotation');
 	let cameraZPosition = scene.getObjectByName('cameraZPosition');
 	let cameraZRotation = scene.getObjectByName('cameraZRotation');
-	if (camChange.position !== 0) {
-		cameraZPosition.position.z += camChange.position;
+	if (keyListener && camChange.position !== 0) {
+		cameraZPosition.position.z += (camChange.position > 0 ? .1 : -.1);
 		camChange.position = 0;
 	}
-	if (camChange.rotation !== 0) {
-		console.log(cameraZPosition.rotation.y);
+	if (keyListener && camChange.rotation !== 0) {
 		if (
 			cameraZPosition.rotation.y <= -6 ||
 			cameraZPosition.rotation.y >= 6 
 		) cameraZPosition.rotation.y = 0;  
-		else cameraZPosition.rotation.y += camChange.rotation;
+		else cameraZPosition.rotation.y += (camChange.rotation > 0 ? Math.PI/60 : -Math.PI/60);
 		camChange.rotation = 0;
 	}
 
@@ -394,7 +410,7 @@ function update(renderer, scene, camera, controls, clock) {
 	boxGrid.children.forEach((child, index) => {
 		// ---- noise
 		// let x = timeElapsed * 2.5 + index; //-------- faster by multiplier example 
-		let x = timeElapsed * .5 + index;
+		let x = timeElapsed * .3 + index;
 		child.scale.y = (noise.simplex2(x, x) + 1) / 2 + .001;
 		if (child.scale.y > .9) child.material.emissive = {r: 0, g: 1, b:1};
 		else child.material.emissive = {r: null, g: null, b:null};
