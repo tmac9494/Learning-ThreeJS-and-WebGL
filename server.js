@@ -28,5 +28,8 @@ app.get('/l-3-2', function(req, res) {
 app.get('/l-3-3', function(req, res) {
 	res.sendFile(path.join(__dirname, 'lesson_3/3', 'index.html'))
 })
+app.get('/just-goofin', function(req, res) {
+	res.sendFile(path.join(__dirname, 'justGoofin', 'index.html'))
+})
  
 app.listen(3010);
