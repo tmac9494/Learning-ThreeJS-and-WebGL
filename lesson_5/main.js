@@ -58,7 +58,7 @@ function init() {
 
 	const rgbShiftEffect = new THREE.ShaderPass(THREE.RGBShiftShader);
 	rgbShiftEffect.renderToScreen = true; // ----- must call this on the last effect
-	rgbShiftEffect.uniforms['amount'].value = 0.001;
+	rgbShiftEffect.uniforms['amount'].value = 0.01;
 	composer.addPass(rgbShiftEffect);
 
 	

@@ -135,12 +135,14 @@ function init() {
 // ------------------------------------------- Animated Camera
 	// example of animating camera using an "animation rig" to make the animations more manageable
 	let cameraZPosition = new THREE.Group();
+	let cameraXPosition = new THREE.Group();
 	let cameraYPosition = new THREE.Group();
 	let cameraYRotation = new THREE.Group();
 	let cameraZRotation = new THREE.Group();
 	let cameraXRotation = new THREE.Group();
 
 	cameraZRotation.name = 'cameraZRotation';
+	cameraXPosition.name = 'cameraXPosition';
 	cameraZPosition.name = 'cameraZPosition';
 	cameraYPosition.name = 'cameraYPosition';
 	cameraYRotation.name = 'cameraYRotation';
@@ -153,7 +155,8 @@ function init() {
 
 	// group camera controllers together and add to scene
 	cameraYPosition.position.y = .5;
-	cameraZRotation.add(camera);
+	cameraXPosition.add(camera)
+	cameraZRotation.add(cameraXPosition);
 	cameraYPosition.add(cameraZRotation);
 	cameraZPosition.add(cameraYPosition);
 	cameraXRotation.add(cameraZPosition);
@@ -182,9 +185,9 @@ function init() {
 	document.getElementById("webgl").appendChild(renderer.domElement);
 
 	// orbit controls
-	var controls = new THREE.OrbitControls(camera, renderer.domElement);
+	// var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-	update(renderer, scene, camera, controls, clock, perfStats);
+	update(renderer, scene, camera, clock, perfStats);
 
 
 
@@ -198,35 +201,7 @@ function init() {
 
 
 
-let camChange = {position:0,rotation:0, key:null}
-let keyListener = false;
-window.addEventListener('keydown', (e) => {
-	keyListener = true;
-    e = e || window.event;
-    // requestAnimationFrame(() => {
-	    if (e.keyCode == '38') {
-	        // up arrow
-	        camChange.position = -1;
-	    }
-	    else if (e.keyCode == '40') {
-	        // down arrow
-	        camChange.position = 1;
-	    }
-	    else if (e.keyCode == '37') {
-	       // left arrow
-	       camChange.rotation = 1;
-	    }
-	    else if (e.keyCode == '39') {
-	       // right arrow
-	       camChange.rotation = -1;
-	    }
 
-	// })
-
-});
-window.addEventListener('keyup', (e) => {
-	keyListener = false;
-})
 
 
 
@@ -356,7 +331,7 @@ function getDirectionalLight(intensity) {
 	light.shadow.camera.right = 60;
 	light.shadow.camera.bottom = -60;
 	light.shadow.camera.top = 60;
-	light.shadow.bias = .0001;
+	light.shadow.bias = .01;
 
 	// increase shdow resolution
 	light.shadow.mapSize.width = 4096;
@@ -373,7 +348,8 @@ function getAmbientLight(intensity) {
 
 
 // continous render
-function update(renderer, scene, camera, controls, clock, stats) {
+const rotationSegments = Math.PI / 600;
+function update(renderer, scene, camera, clock, stats) {
 	renderer.render(scene, camera);
 
 	let timeElapsed = clock.getElapsedTime();
@@ -385,19 +361,50 @@ function update(renderer, scene, camera, controls, clock, stats) {
 	let cameraXRotation = scene.getObjectByName('cameraXRotation');
 	let cameraYRotation = scene.getObjectByName('cameraYRotation');
 	let cameraZPosition = scene.getObjectByName('cameraZPosition');
+	let cameraXPosition = scene.getObjectByName('cameraXPosition');
 	let cameraZRotation = scene.getObjectByName('cameraZRotation');
-	if (keyListener && camChange.position !== 0) {
-		cameraZPosition.translateZ(camChange.position === 1 ? .12 : -.12);
-		camChange.position = 0;
-		cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.007;
+
+	// player movement
+
+	// if (camChange.move.active) {
+	// 	// cameraZPosition.translateZ(camChange.move.direct === 1 ? .05 : -.05);
+	// 	cameraZPosition.position.z += (camChange.move.direct === 1 ? .05 : -.05);
+	// 	console.log(moveCamera(camChange.move.direct))
+	// 	// console.log(cameraZRotation.rotation.y / Math.PI);
+	// // 	cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.007;
+	// }	
+	let moving = false;
+	Object.values(moveTracker).forEach(track => {
+		if (track && !moving) moving = true;
+	})
+	if (moving) {
+		// cameraZPosition.position.z += (camChange.move.direct === 1 ? .05 : -.05);
+		const pos = moveCamera(cameraZPosition.rotation.y / (Math.PI * 2), cameraZPosition.position);
+		console.log(pos);
+		if (pos.z !== null) {
+			// pos.z > 0 
+				// ? cameraZPosition.position.z += pos.z /20
+				// : cameraZPosition.position.z -= pos.z /20;
+			cameraZPosition.position.z += pos.z /20
+		}
+		if (pos.x !== null) cameraZPosition.position.x += pos.x /20;
 	}
-	if (keyListener && camChange.rotation !== 0) {
-		if (
-			cameraZPosition.rotation.y <= -6 ||
-			cameraZPosition.rotation.y >= 6 
-		) cameraZPosition.rotation.y = 0;  
-		else cameraZPosition.rotation.y += (camChange.rotation === 1 ? Math.PI/60 : -Math.PI/60);
-		camChange.rotation = 0;
+
+	// camera rotation
+	// if (camChange.rotate.active) {
+	// 	if (
+	// 		cameraZPosition.rotation.y <= -6 ||
+	// 		cameraZPosition.rotation.y >= 6 
+	// 	) cameraZPosition.rotation.y = 0;  
+	// 	else cameraZPosition.rotation.y += (camChange.rotate.direct === 1 ? Math.PI/100 : -Math.PI/100);
+	// 	camChange.rotation = 0;
+	// }
+
+	if (mouseTrack.active) {
+		cameraZPosition.rotation.y += mouseTrack.y * rotationSegments;
+		if (cameraZPosition.rotation.y / (Math.PI * 2) > 1) cameraZPosition.rotation.y = 0;
+		if (cameraZPosition.rotation.y / (Math.PI * 2) < -1) cameraZPosition.rotation.y = 0;
+		// cameraXRotation.rotation.x += mouseTrack.x * rotationSegments;
 	}
 
 	// cameraZPosition.position.z -= 0.25;
@@ -432,12 +439,11 @@ function update(renderer, scene, camera, controls, clock, stats) {
 	})
 //box grid
 
-	controls.update();
 	stats.update();
 	TWEEN.update();
 
 	requestAnimationFrame(function() {
-		update(renderer, scene, camera, controls, clock, stats);
+		update(renderer, scene, camera, clock, stats);
 	})
 }
 
