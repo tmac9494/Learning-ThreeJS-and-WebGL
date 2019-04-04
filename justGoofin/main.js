@@ -62,7 +62,33 @@ function init() {
 
 
 // ------------------------------------------------------------------- Objects -------------------
+	// particles
+	// const particleGeo = new THREE.Geometry();
+	// const particleMaterial = new THREE.PointsMaterial({
+	// 	color: '#32cd32',
+	// 	size: .2,
+	// 	map: new THREE.TextureLoader().load('../assets/textures/particle.jpg'),
+	// 	transparent: true,
+	// 	blending: THREE.AdditiveBlending,
+	// 	depthWrite: false,
+	// });
 
+	// let particleCount = 100;
+	// let particleDistance = 1;
+
+	// for (let i = 0;i<particleCount;i++) {
+	// 	const posX = (Math.random() - 0.5) * particleDistance;
+	// 	const posY = (Math.random() - 0.5) * particleDistance;
+	// 	const posZ = (Math.random() - 0.5) * particleDistance;
+	// 	const particle = new THREE.Vector3(posX, posY, posZ);
+	// 	particleGeo.vertices.push(particle);
+	// }
+	// const particleSystem = new THREE.Points(
+	// 	particleGeo,
+	// 	particleMaterial,
+	// );
+	// particleSystem.name = 'particle-system';
+	// scene.add(particleSystem);
 
 
 	//  plane
@@ -237,6 +263,7 @@ function getBoxGrid(amount, seperationMuliplier, reflection) {
 		const obj = getBox(1, 2, 1, reflection);
 		obj.position.x = i * seperationMuliplier;
 		obj.position.y = obj.geometry.parameters.height / 2;
+		addBarrier(obj.position.x, obj.position.y, obj.position.z)
 		group.add(obj);
 		// create the rows of blocks
 		for (let j = 1;j<amount;j++) {
@@ -244,6 +271,7 @@ function getBoxGrid(amount, seperationMuliplier, reflection) {
 			obj.position.x = i * seperationMuliplier;
 			obj.position.y = obj.geometry.parameters.height / 2;
 			obj.position.z = j * seperationMuliplier;
+			addBarrier(obj.position.x, obj.position.y, obj.position.z)
 			group.add(obj);
 		}
 	}
@@ -348,46 +376,53 @@ function getAmbientLight(intensity) {
 
 
 // continous render
-const rotationSegments = Math.PI / 600;
+// const rotationSegments = Math.PI / 600;
 function update(renderer, scene, camera, clock, stats) {
 	renderer.render(scene, camera);
 
 	let timeElapsed = clock.getElapsedTime();
 	let boxGrid = scene.getObjectByName('box-grid');
 
-	
-// ---------- Animated Camera
-
 	let cameraXRotation = scene.getObjectByName('cameraXRotation');
 	let cameraYRotation = scene.getObjectByName('cameraYRotation');
 	let cameraZPosition = scene.getObjectByName('cameraZPosition');
 	let cameraXPosition = scene.getObjectByName('cameraXPosition');
+	let cameraYPosition = scene.getObjectByName('cameraYPosition');
 	let cameraZRotation = scene.getObjectByName('cameraZRotation');
 
-	// player movement
+//------------- player movement
 
-	// if (camChange.move.active) {
-	// 	// cameraZPosition.translateZ(camChange.move.direct === 1 ? .05 : -.05);
-	// 	cameraZPosition.position.z += (camChange.move.direct === 1 ? .05 : -.05);
-	// 	console.log(moveCamera(camChange.move.direct))
-	// 	// console.log(cameraZRotation.rotation.y / Math.PI);
-	// // 	cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.007;
-	// }	
+
+	// Crouch 
+	if (moveTracker.actions.crouch) cameraYPosition.position.y = .2;
+	else cameraYPosition.position.y = .5;
+
+	// check dirction keys for movement
 	let moving = false;
-	Object.values(moveTracker).forEach(track => {
+	Object.values(moveTracker.directions).forEach(track => {
 		if (track && !moving) moving = true;
 	})
+
 	if (moving) {
 		// cameraZPosition.position.z += (camChange.move.direct === 1 ? .05 : -.05);
 		const pos = moveCamera(cameraZPosition.rotation.y / (Math.PI * 2), cameraZPosition.position);
 		console.log(pos);
-		if (pos.z !== null) {
-			// pos.z > 0 
-				// ? cameraZPosition.position.z += pos.z /20
-				// : cameraZPosition.position.z -= pos.z /20;
-			cameraZPosition.position.z += pos.z /20
+
+		// camera sway
+		let tilt = moveTracker.actions.run ? .012 : .002;
+		cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * tilt;
+
+		
+		// Z Axis
+		const barrierCheck = checkBarriers(cameraZPosition.position.x, cameraZPosition.position.z, boxGrid);
+		console.log(barrierCheck)
+		if (barrierCheck.z !== null) {
+				cameraZPosition.position.z += playerSteps(pos.z);
 		}
-		if (pos.x !== null) cameraZPosition.position.x += pos.x /20;
+		// X Axis
+		if (barrierCheck.x !== null) {
+			cameraZPosition.position.x += playerSteps(pos.x);
+		}
 	}
 
 	// camera rotation
@@ -401,10 +436,11 @@ function update(renderer, scene, camera, clock, stats) {
 	// }
 
 	if (mouseTrack.active) {
-		cameraZPosition.rotation.y += mouseTrack.y * rotationSegments;
+		cameraZPosition.rotation.y += mouseTrack.y * .003;
 		if (cameraZPosition.rotation.y / (Math.PI * 2) > 1) cameraZPosition.rotation.y = 0;
 		if (cameraZPosition.rotation.y / (Math.PI * 2) < -1) cameraZPosition.rotation.y = 0;
-		// cameraXRotation.rotation.x += mouseTrack.x * rotationSegments;
+		if ( mouseTrack.x < 0 && cameraZRotation.rotation.x  > -1 ) cameraZRotation.rotation.x += mouseTrack.x * .003
+		else if (mouseTrack.x > 0 && cameraZRotation.rotation.x  < 1) cameraZRotation.rotation.x += mouseTrack.x * .003;
 	}
 
 	// cameraZPosition.position.z -= 0.25;
@@ -413,8 +449,8 @@ function update(renderer, scene, camera, clock, stats) {
 	// 	cameraXRotation.rotation.x += .01;
 	// }
 
-//Animated Camera
-	
+// player movement
+
 // ----------- box Grid
 
 	boxGrid.children.forEach((child, index) => {
@@ -423,9 +459,17 @@ function update(renderer, scene, camera, clock, stats) {
 		let x = timeElapsed * .3 + index;
 		child.scale.y = (noise.simplex2(x, x) + 1) / 2 + .001;
 		child.position.y = child.scale.y/2 * child.geometry.parameters.height; // keep object on top of plane
-		if (child.scale.y > .9) { 
-			child.material.emissive = {r: 0, g: 1, b:1};
-		}
+
+		if (child.scale.y >= .9) child.material.emissive = {r: 0, g: 1, b:1}
+		else if (child.scale.y >= .88) child.material.emissive = {r: 0, g: .9, b:.9}
+		else if (child.scale.y >= .86) child.material.emissive = {r: 0, g: .8, b:.8}
+		else if (child.scale.y >= .85) child.material.emissive = {r: 0, g: .7, b:.7}
+		else if (child.scale.y >= .84) child.material.emissive = {r: 0, g: .5, b:.5}
+		else if (child.scale.y >= .83) child.material.emissive = {r: 0, g: .4, b:.4}
+		else if (child.scale.y >= .82) child.material.emissive = {r: 0, g: .3, b:.3}
+		else if (child.scale.y >= .81) child.material.emissive = {r: .1, g: .3, b:.2}
+		else if (child.scale.y >= .78) child.material.emissive = {r: .2, g: .3, b:.1}
+		
 		else child.material.emissive = {r: null, g: null, b:null};
 		// ---- sine
 		// child.scale.y = (Math.sin(timeElapsed * 5 + index) + 1) / 2 + .001; 
@@ -439,8 +483,24 @@ function update(renderer, scene, camera, clock, stats) {
 	})
 //box grid
 
+	// const particleSystem = scene.getObjectByName('particle-system');
+
+	// particleSystem.geometry.vertices.forEach((particle) => {
+	// 	particle.x += (Math.random() - 1) * 0.001;
+	// 	particle.y += (Math.random() - 0.75) * 0.001;
+	// 	particle.z += Math.random() * 0.001;
+
+	// 	if (particle.x < .1) particle.x = .5;
+	// 	if (particle.y < .1) particle.y = .5;
+	// 	if (particle.z < .1) particle.z = .5;
+	// 	if (particle.z > .5) particle.z = .1;
+	// })
+	// particleSystem.geometry.verticesNeedUpdate = true;
+
 	stats.update();
 	TWEEN.update();
+
+
 
 	requestAnimationFrame(function() {
 		update(renderer, scene, camera, clock, stats);
