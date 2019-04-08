@@ -1,40 +1,4 @@
 
-//============= CORE FUNCTIONALITY TIPS
-
-
-//-- scene
-
-//---- camera
-// need fov, aspect ration, near clipping plane, far clipping plane
-// adjust camera angle with [camera].lookat( new Vector3(x, y z))
-
-// ---- Objects
-// need a geometry(shape) and a material(appearance)
-
-// ---- Planes
-
-
-
-
-
-//============= IMPLEMENTATION NOTEs
-
-//Cant See Anything but no errors?
-// - all objects add including camera, will be at 0,0 you need to adjust the z axis position to put objects into view
-
-// rotating in 3d
-// uses radians instead of degrees (90deg = PI / 2)
-
-// How do i constantly render?
-// - window.requestAnimationFrame
-
-// not all lights are casting shadows??
-// - light has a camera like view that sometimes needs to be adjusted to fit all the objects into its fov
-// - (THREE.CameraHelper) can will outline the fov of the light source and help you figure out where its being casted
-// - adjust fov with [light instance].shadow.camera(left, right, bottom, top -- all default to -5 or 5)
-
-
-
 function init() {
 	let scene = new THREE.Scene(); // ------ scene
 	const perfStats = new Stats();
@@ -63,6 +27,7 @@ function init() {
 
 // ------------------------------------------------------------------- Objects -------------------
 	// particles
+
 	// const particleGeo = new THREE.Geometry();
 	// const particleMaterial = new THREE.PointsMaterial({
 	// 	color: '#32cd32',
@@ -143,14 +108,6 @@ function init() {
 		.2, // - near clippin plane
 		1000 // - far clipping plane (plane area that is visible to the camera)
 	)
-	// let camera = new THREE.OrthographicCamera( 
-	// 	-15,
-	// 	15,
-	// 	15,
-	// 	-15,
-	// 	1,
-	// 	1000
-	// )
 
 	// ---------- Static Camera
 	// camera.position.x = 10;
@@ -174,9 +131,6 @@ function init() {
 	cameraYRotation.name = 'cameraYRotation';
 	cameraXRotation.name = 'cameraXRotation';
 
-	// cameraXRotation.rotation.x = -Math.PI / 2;
-	// cameraYPosition.position.y = 1;
-	// cameraZPosition.position.z = 100;
 
 
 	// group camera controllers together and add to scene
@@ -311,7 +265,6 @@ function getPlane(size, reflection) {
 	material.bumpMap = loader.load('/assets/textures/purp-tiled-floor-2.png');
 	material.roughnessMap = loader.load('/assets/textures/purp-tiled-floor-2.png');
 	material.bumpScale = 0.1;
-	material.normalScale = 
 	material.envMap = reflection;
 	material.envMapIntensity = .5;
 	material.metalness = .3;
@@ -404,9 +357,10 @@ function update(renderer, scene, camera, clock, stats) {
 	})
 
 	if (moving) {
+		console.log(moveTracker.directions)
 		// cameraZPosition.position.z += (camChange.move.direct === 1 ? .05 : -.05);
 		const pos = moveCamera(cameraZPosition.rotation.y / (Math.PI * 2), cameraZPosition.position);
-		console.log(pos);
+		// console.log(pos);
 
 		// camera sway
 		let tilt = moveTracker.actions.run ? .012 : .002;
@@ -415,7 +369,7 @@ function update(renderer, scene, camera, clock, stats) {
 		
 		// Z Axis
 		const barrierCheck = checkBarriers(cameraZPosition.position.x, cameraZPosition.position.z, boxGrid);
-		console.log(barrierCheck)
+		// console.log(barrierCheck)
 		if (barrierCheck.z !== null) {
 				cameraZPosition.position.z += playerSteps(pos.z);
 		}
@@ -425,16 +379,6 @@ function update(renderer, scene, camera, clock, stats) {
 		}
 	}
 
-	// camera rotation
-	// if (camChange.rotate.active) {
-	// 	if (
-	// 		cameraZPosition.rotation.y <= -6 ||
-	// 		cameraZPosition.rotation.y >= 6 
-	// 	) cameraZPosition.rotation.y = 0;  
-	// 	else cameraZPosition.rotation.y += (camChange.rotate.direct === 1 ? Math.PI/100 : -Math.PI/100);
-	// 	camChange.rotation = 0;
-	// }
-
 	if (mouseTrack.active) {
 		cameraZPosition.rotation.y += mouseTrack.y * .003;
 		if (cameraZPosition.rotation.y / (Math.PI * 2) > 1) cameraZPosition.rotation.y = 0;
@@ -442,12 +386,6 @@ function update(renderer, scene, camera, clock, stats) {
 		if ( mouseTrack.x < 0 && cameraZRotation.rotation.x  > -1 ) cameraZRotation.rotation.x += mouseTrack.x * .003
 		else if (mouseTrack.x > 0 && cameraZRotation.rotation.x  < 1) cameraZRotation.rotation.x += mouseTrack.x * .003;
 	}
-
-	// cameraZPosition.position.z -= 0.25;
-	// cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.05;
-	// if (cameraXRotation.rotation.x < 0) {
-	// 	cameraXRotation.rotation.x += .01;
-	// }
 
 // player movement
 

@@ -41,6 +41,9 @@ app.get('/l-5', function(req, res) {
 app.get('/just-goofin', function(req, res) {
 	res.sendFile(path.join(__dirname, 'justGoofin', 'index.html'))
 })
+app.get('/ecomm-module', function(req, res) {
+	res.sendFile(path.join(__dirname, 'ecomm', 'index.html'))
+})
 app.get('/particle-play', function(req, res) {
 	res.sendFile(path.join(__dirname, 'particles', 'index.html'))
 })
