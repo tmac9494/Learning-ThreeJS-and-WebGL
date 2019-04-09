@@ -2,6 +2,7 @@ var express = require('express')
 var app = express()
 const bodyParser = require('body-parser');
 const path = require('path');
+const PORT = 3010;
 
 app.use(express.static(`${__dirname}`))
 app.use('/assets', express.static(`${__dirname}/assets/`));
@@ -48,4 +49,4 @@ app.get('/particle-play', function(req, res) {
 	res.sendFile(path.join(__dirname, 'particles', 'index.html'))
 })
  
-app.listen(3010);
+app.listen(PORT, () => console.log(`Listening on Port: ${PORT}`));

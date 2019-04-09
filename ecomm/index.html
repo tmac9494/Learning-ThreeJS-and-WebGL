@@ -4,15 +4,50 @@
 	<title>Three.js</title>
 	<style type="text/css">
 		html, body {margin: 0; padding: 0; overflow: hidden}
+		#swatch-controls {
+			position:fixed;
+			top:auto;
+			border-radius:50px;
+			box-shadow: 0 0 32px rgba(0,0,0,0.12);
+			bottom:5%;
+			left: 50%;
+			transform:translateX(-50%);
+			background:rgba(255,255,255,0.7);
+		}
+		#swatch-controls button {
+			border-radius:50px;
+			margin:12px;
+			border:none;
+			width:45px;
+			height:45px;
+			display:inline-block;
+			transition: transform .32s;
+			cursor:pointer;
+		}
+		#swatch-controls button:hover {
+			transform:scale(1.2);
+		}
+		#swatch-controls button:focus {
+			outline:none;
+			border:none;
+			box-shadow:none;
+		}
 	</style>
 </head>
 <body>
-	<div id="webgl"></div>
+	<div id="webgl">
+		<div id="swatch-controls">
+			<button onClick="changeSwatch('gray')" style="background: url('../assets/models/test-chair/Leater.jpg') no-repeat center;background-size:cover;"></button>
+			<button onClick="changeSwatch('red')" style="background: url('../assets/models/test-chair/red-leather.jpg') no-repeat center;background-size:cover;"></button>
+			<button onClick="changeSwatch('yellow')" style="background: url('../assets/models/test-chair/yellow-leather.jpg') no-repeat center;background-size:cover;"></button>
+			<button onClick="changeSwatch('black')" style="background: url('../assets/models/test-chair/black-leather.jpg') no-repeat center;background-size:cover;"></button>
+		</div>
+	</div>
 	<script src="../lib/stats.js"></script>
 	<script src="../lib/Tween.min.js"></script>
 	<script src="../lib/dat.gui.min.js"></script>
 	<script src="../lib/perlin.js"></script>
-	<script src="../lib/three.js"></script>
+	<script src="../lib/updatedthree/three.js"></script>
 	<script src="../lib/OrbitControls.js"></script>
 	<script src="../lib/OBJLoader.js"></script>
 	<script src="./ecomm/main.js"></script>
