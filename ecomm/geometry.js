@@ -46,7 +46,7 @@ function buildModel() {
 	return new Promise((resolve, reject) => {
 
 
-		modelLoader.load('../assets/models/love-seat/t-low-poly.obj', function(obj) {
+		modelLoader.load(modelData[sceneState.modelIndex].path + modelData[sceneState.modelIndex].modelFile, function(obj) {
 			// let materialTexture = textureLoader.load('../assets/models/love-seat/texture/Homespun_Cream_dif.jpg');
 			// let materialBumpMap = textureLoader.load('../assets/models/love-seat/texture/Homespun_Cream_bump.jpg');
 			// let materialNormalMap = textureLoader.load('../assets/models/love-seat/texture/Homespun_Cream_normal.jpg');
@@ -156,6 +156,7 @@ function initTextures(model) {
 
 	// apply textures
 	model.traverse(child => {
+		console.log(child.name)
 		// material
 		const material = new THREE.MeshPhysicalMaterial({
 			color: '#fff'
