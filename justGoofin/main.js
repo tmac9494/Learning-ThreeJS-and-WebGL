@@ -157,7 +157,7 @@ function init() {
 //animated camera
 
 
-	let renderer = new THREE.WebGLRenderer(); // - create renderer
+	let renderer = new THREE.WebGLRenderer({antialias: true}); // - create renderer
 	// canvas, svg, webGL(best renderer because it leverages the gpu instead of the cpu)
 	renderer.setSize(window.innerWidth, window.innerHeight); // - set size renderer
 	renderer.setClearColor('rgb(120, 120, 120)')

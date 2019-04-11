@@ -48,5 +48,8 @@ app.get('/ecomm-module', function(req, res) {
 app.get('/particle-play', function(req, res) {
 	res.sendFile(path.join(__dirname, 'particles', 'index.html'))
 })
+app.get('/procedural', function(req, res) {
+	res.sendFile(path.join(__dirname, 'procedural-terrain', 'index.html'))
+})
  
 app.listen(PORT, () => console.log(`Listening on Port: ${PORT}`));
