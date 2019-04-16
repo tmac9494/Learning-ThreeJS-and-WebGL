@@ -47,20 +47,6 @@ function buildModel() {
 
 
 		modelLoader.load(modelData[sceneState.modelIndex].path + modelData[sceneState.modelIndex].modelFile, function(obj) {
-			// let materialTexture = textureLoader.load('../assets/models/love-seat/texture/Homespun_Cream_dif.jpg');
-			// let materialBumpMap = textureLoader.load('../assets/models/love-seat/texture/Homespun_Cream_bump.jpg');
-			// let materialNormalMap = textureLoader.load('../assets/models/love-seat/texture/Homespun_Cream_normal.jpg');
-
-			// let woodTexture = textureLoader.load('../assets/models/love-seat/texture/ArchiCGI_wood_wallnut_diff.jpg');
-			// let woodLight = textureLoader.load('../assets/models/love-seat/texture/ArchiCGI_wood_wallnut_refl.jpg');
-			// let woodBump = textureLoader.load('../assets/models/love-seat/texture/ArchiCGI_wood_wallnut_refl.jpg');
-
-			// let materialMaster = new THREE.MeshPhysicalMaterial({
-			// 	color: '#fff'
-			// })
-			// let materialMasterAlt = new THREE.MeshPhysicalMaterial({
-			// 	color: '#fff'
-			// })
 			obj.scale.x = sceneSettings.modelScale;
 			obj.scale.y = sceneSettings.modelScale;
 			obj.scale.z = sceneSettings.modelScale;
@@ -69,49 +55,6 @@ function buildModel() {
 
 
 			let texturedModel = initTextures(obj);
-
-			// obj.traverse(child => {
-			// 	child.castShadow = true;
-			// 	if (child.name == "Sofa_2") child.receiveShadow = true;
-			// 	if (child.name == "Shape048") child.receiveShadow = true;
-			// 	if (child.name == "Sofa_2" || child.name == "Sofa2_pillows001" || child.name == "Shape048") {
-			// 		child.material = materialMaster;
-			// 		materialMaster.map = materialTexture;
-			// 		materialMaster.map.wrapS = THREE.RepeatWrapping;
-			// 		materialMaster.map.wrapT = THREE.RepeatWrapping;
-			// 		materialMaster.map.repeat.set(1, 1);
-			// 		materialMaster.bumpMap = materialBumpMap;
-			// 		materialMaster.bumpScale = .05;
-			// 		materialMaster.bumpMap.wrapS = THREE.RepeatWrapping;
-			// 		materialMaster.bumpMap.wrapT = THREE.RepeatWrapping;
-			// 		materialMaster.bumpMap.repeat.set(1, 1);
-			// 		materialMaster.normalMap = materialNormalMap;
-			// 		materialMaster.normalMap.wrapS = THREE.RepeatWrapping;
-			// 		materialMaster.normalMap.wrapT = THREE.RepeatWrapping;
-			// 		materialMaster.normalMap.repeat.set(1, 1);
-			// 		materialMaster.roughness = 1;
-			// 	}
-			// 	if (child.name == "ChamferCyl002") {
-			// 		child.material = materialMasterAlt;
-			// 		materialMasterAlt.map = woodTexture;
-			// 		materialMasterAlt.map.wrapS = THREE.RepeatWrapping;
-			// 		materialMasterAlt.map.wrapT = THREE.RepeatWrapping;
-			// 		materialMasterAlt.roughnessMap = woodLight;
-			// 		materialMasterAlt.roughnessMap.wrapS = THREE.RepeatWrapping;
-			// 		materialMasterAlt.roughnessMap.wrapT = THREE.RepeatWrapping;
-			// 		materialMasterAlt.roughness = 1;
-			// 		materialMasterAlt.roughnessMap.repeat.set(1, 1);
-			// 		materialMasterAlt.clearCoat = .2;
-			// 		materialMasterAlt.bumpMap = woodBump;
-			// 		materialMasterAlt.bumpScale = .02;
-			// 		materialMasterAlt.bumpMap.wrapS = THREE.RepeatWrapping;
-			// 		materialMasterAlt.bumpMap.wrapT = THREE.RepeatWrapping;
-			// 		materialMasterAlt.bumpMap.repeat.set(1, 1);
-			// 		child.receiveShadow = true;
-			// 	}
-
-			// })
-
 
 			// obj.castShadow = true;
 			texturedModel.name = "furniture-model";
@@ -153,18 +96,25 @@ function initTextures(model) {
 
 		}
 	})
+	// material
+	// let material = new THREE.MeshPhysicalMaterial({
+	// 	color: '#fff'
+	// })
+	// sceneState.materials.push(material)
+	Object.keys(modelData[sceneState.modelIndex].targets).forEach(target => {
+		console.log(target);
+		sceneState.materials[target] = new THREE.MeshPhysicalMaterial({color:'#fff'});
+		console.log(sceneState.materials)
+	})
 
 	// apply textures
 	model.traverse(child => {
+		console.log(child)
 		console.log(child.name)
-		// material
-		const material = new THREE.MeshPhysicalMaterial({
-			color: '#fff'
-		})
 		let name = child.name;
 		let applyTexture = defaultTexture;
 		let textDataID = textures.default;
-
+		
 		// change texture for static children
 		staticTextures.forEach(st => {
 			if (st.objects.includes(name)) {
@@ -177,16 +127,19 @@ function initTextures(model) {
 			}
 		})
 
+		const materialCopy = sceneState.materials[applyTexture.target];
+		console.log(materialCopy)
+
 		let isTextureTarget = targets[applyTexture.target].objects.includes(name);
 		// handle dynamic
 		if (targets[applyTexture.target].objects.includes(name) && isTextureTarget) {
-			child.material = material;
+			child.material = materialCopy;
 			sceneSettings.maps.forEach(map => {
 				if (applyTexture[map]) {
-					material[map] = sceneState.textures[textDataID][map];
-					material[map].wrapS = THREE.RepeatWrapping;
-					material[map].wrapT = THREE.RepeatWrapping;
-					material[map].repeat.set(applyTexture.wrapS, applyTexture.wrapT)
+					materialCopy[map] = sceneState.textures[textDataID][map];
+					materialCopy[map].wrapS = THREE.RepeatWrapping;
+					materialCopy[map].wrapT = THREE.RepeatWrapping;
+					materialCopy[map].repeat.set(applyTexture.wrapS, applyTexture.wrapT)
 				}
 
 			})
@@ -194,7 +147,7 @@ function initTextures(model) {
 		// apply style properties to material
 		if (applyTexture.styles && isTextureTarget) {
 			Object.keys(applyTexture.styles).forEach(property => {
-				material[property] = applyTexture.styles[property];
+				materialCopy[property] = applyTexture.styles[property];
 			})
 		}
 		//global object styles/settings

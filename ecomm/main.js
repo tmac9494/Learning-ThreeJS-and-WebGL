@@ -1,8 +1,18 @@
+const loader = document.createElement('div');
+const loaderText = document.createTextNode("Loading Furniture Model...");
+loader.appendChild(loaderText);
+loader.id = "loader";
 
-
+// initialize state and controls
+generateModelButtons();
+document.getElementById("webgl").appendChild(loader);
+sceneState.loading.notified = true;
 
 // --------------------------------------------------- Model Import 
-buildModel().then(model => init(model))
+buildModel().then(model => {
+	clearLoading();
+	init(model)
+})
 
 function init(FurnModel) {
 	let scene = new THREE.Scene(); // ------ scene
@@ -97,12 +107,11 @@ function init(FurnModel) {
 
 	// orbit controls
 	var controls = new THREE.OrbitControls(camera, renderer.domElement);
-	let camY = 0;
-	FurnModel.children.forEach(child => {
-		child.geometry.computeBoundingSphere();
-		camY += child.geometry.boundingSphere.center.y;
-	})
-	controls.target = new THREE.Vector3(0, (camY / 2) * sceneSettings.modelScale, 0);
+
+	const box = new THREE.Box3().setFromObject(FurnModel).getSize();
+
+	controls.target = new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0);
+
 
 	update(renderer, scene, camera, controls, clock, perfStats, flLight, frLight, bLight);
 
@@ -118,17 +127,29 @@ function update(renderer, scene, camera, controls, clock, stats, flLight, frLigh
 	let timeElapsed = clock.getElapsedTime();
 
 	// ---- Make sure camera is focused on the center of the model
-	let CamY = 0;
-	const furnModel = scene.getObjectByName('furniture-model');
-	if (furnModel) {
-		furnModel.children.forEach(child => {
-			CamY += child.geometry.boundingSphere.center.y;
-		});
-	}
+
 	if (sceneState.centerRequest) {
-		controls.target = new THREE.Vector3(0, (CamY / 2) * sceneSettings.modelScale, 0);
-		camera.lookAt(new THREE.Vector3(0, (CamY / 2) * sceneSettings.modelScale, 0));
+		const box = new THREE.Box3().setFromObject(scene.getObjectByName('furniture-model')).getSize();
+		controls.target = new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0);
+		camera.lookAt(new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0));
 		sceneState.centerRequest = false;
+	}
+
+	// --- model change
+	if (sceneState.modelChange.new) {
+		changeModel(sceneState.modelChange.index, scene, renderer);
+		sceneState.modelChange.new = false;
+	}
+
+	//---- loading notification
+	if (sceneState.loading.is && !sceneState.loading.notified) {
+		document.getElementById('webgl').appendChild(loader);
+		sceneState.loading.notified = true;
+		controls.enabled = false;
+	} else if (!sceneState.loading.is && sceneState.loading.notified) {
+		document.getElementById('loader').remove();
+		sceneState.loading.notified = false;
+		controls.enabled = true;
 	}
 
 

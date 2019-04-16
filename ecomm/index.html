@@ -66,6 +66,35 @@
 			border:none;
 			box-shadow:none;
 		}
+		#loader {
+			position:absolute;
+			left: 50%;
+			top:50%;
+			transform:translate(-50%, -50%);
+			margin-right: -50%;
+			background: rgba(255,255,255,0.7);
+			font-size: 32px;
+			font-weight: bold;
+			padding: 42px 26px;
+			box-shadow: 0 0 18px rgba(0,0,0,0.12);
+			border-radius:5px;
+			color:#25292c;
+			z-index: 1000;
+		}
+		#model-selection button {
+			display:block;
+			transition:.32s;
+			opacity: .85;
+			cursor:pointer;
+			width:50px;
+			margin-bottom:10px;
+			border-radius:5px;
+			height:50px;
+			border:none;
+		}
+		#model-selection button:hover {
+			opacity:1;
+		}
 	</style>
 </head>
 <body>
@@ -92,6 +121,7 @@
 	<script src="../lib/OBJLoader.js"></script>
 	<script src="./ecomm/core.js"></script>
 	<script src="./ecomm/helpers.js"></script>
+	<script src="./ecomm/elements.js"></script>
 	<script src="./ecomm/geometry.js"></script>
 	<script src="./ecomm/events.js"></script>
 	<script src="./ecomm/main.js"></script>
