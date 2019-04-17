@@ -3,25 +3,22 @@ const loaderText = document.createTextNode("Loading Furniture Model...");
 loader.appendChild(loaderText);
 loader.id = "loader";
 
+let modelInstance = new ModelHandler();
 // initialize state and controls
 generateModelButtons();
 document.getElementById("webgl").appendChild(loader);
-sceneState.loading.notified = true;
+modelInstance.loading.notified = true;
 
 // --------------------------------------------------- Model Import 
-buildModel().then(model => {
-	clearLoading();
-	init(model)
-})
 
-function init(FurnModel) {
+
+
+function init() {
 	let scene = new THREE.Scene(); // ------ scene
 	const perfStats = new Stats();
 	document.getElementById("webgl").appendChild(perfStats.dom);
-	const gui = new dat.GUI();
+	// const gui = new dat.GUI();
 	const clock = new THREE.Clock();
-	scene.add(FurnModel);
-	console.log(FurnModel)
 
 
 
@@ -61,25 +58,25 @@ function init(FurnModel) {
 
 
 // ----------------------------------- GUI
-	const flLightGui = gui.addFolder('Front Left Light');
-	flLightGui.add(flLight, 'intensity', -1,1);
-	flLightGui.add(flLight.position, 'x', -1000,1000);
-	flLightGui.add(flLight.position, 'y', -1000,1000);
-	flLightGui.add(flLight.position, 'z', -1000,1000);
-	flLightGui.add(flLight, 'penumbra', -1,1);
-	const frLightGui = gui.addFolder('Front Right Light');
-	frLightGui.add(frLight, 'intensity', -1,1);
-	frLightGui.add(frLight.position, 'x', -1000,1000);
-	frLightGui.add(frLight.position, 'y', -1000,1000);
-	frLightGui.add(frLight.position, 'z', -1000,1000);
-	frLightGui.add(frLight, 'penumbra', -1,1);
-	const bLightGui = gui.addFolder('Back Light');
-	bLightGui.add(bLight, 'intensity', -3,3);
-	bLightGui.add(bLight.position, 'x', -1000,1000);
-	bLightGui.add(bLight.position, 'y', -1000,1000);
-	bLightGui.add(bLight.position, 'z', -1000,1000);
-	bLightGui.add(bLight, 'penumbra', -1,1);
-	gui.closed = true;
+	// const flLightGui = gui.addFolder('Front Left Light');
+	// flLightGui.add(flLight, 'intensity', -1,1);
+	// flLightGui.add(flLight.position, 'x', -1000,1000);
+	// flLightGui.add(flLight.position, 'y', -1000,1000);
+	// flLightGui.add(flLight.position, 'z', -1000,1000);
+	// flLightGui.add(flLight, 'penumbra', -1,1);
+	// const frLightGui = gui.addFolder('Front Right Light');
+	// frLightGui.add(frLight, 'intensity', -1,1);
+	// frLightGui.add(frLight.position, 'x', -1000,1000);
+	// frLightGui.add(frLight.position, 'y', -1000,1000);
+	// frLightGui.add(frLight.position, 'z', -1000,1000);
+	// frLightGui.add(frLight, 'penumbra', -1,1);
+	// const bLightGui = gui.addFolder('Back Light');
+	// bLightGui.add(bLight, 'intensity', -3,3);
+	// bLightGui.add(bLight.position, 'x', -1000,1000);
+	// bLightGui.add(bLight.position, 'y', -1000,1000);
+	// bLightGui.add(bLight.position, 'z', -1000,1000);
+	// bLightGui.add(bLight, 'penumbra', -1,1);
+	// gui.closed = true;
 
 // --------------------------------------------------- Camera	
 	const camera = new THREE.PerspectiveCamera( 
@@ -92,8 +89,8 @@ function init(FurnModel) {
 	// ---------- Static Camera
 	camera.position.x = -40;
 	camera.position.y = 80;
-	camera.position.z = 100;
-	camera.lookAt(new THREE.Vector3(0, 25, 0));
+	camera.position.z = 150;
+	camera.lookAt(new THREE.Vector3(0, 100, 0));
 	scene.add(camera);
 
 
@@ -105,15 +102,20 @@ function init(FurnModel) {
 	renderer.shadowMap.enabled = true;
 	document.getElementById("webgl").appendChild(renderer.domElement);
 
+
 	// orbit controls
 	var controls = new THREE.OrbitControls(camera, renderer.domElement);
+	modelInstance.controls = controls;
+	modelInstance.scene = scene;
+	modelInstance.camera = camera;
+	modelInstance.renderer = renderer;
+	// load Model
+	modelInstance.createModel().then(() => {
+		modelInstance.centerCamera();
+		modelInstance.generateSwatchButtons();
+		update(renderer, scene, camera, controls, clock, perfStats, flLight, frLight, bLight);
+	})
 
-	const box = new THREE.Box3().setFromObject(FurnModel).getSize();
-
-	controls.target = new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0);
-
-
-	update(renderer, scene, camera, controls, clock, perfStats, flLight, frLight, bLight);
 
 	return scene;
 }
@@ -126,38 +128,16 @@ function update(renderer, scene, camera, controls, clock, stats, flLight, frLigh
 
 	let timeElapsed = clock.getElapsedTime();
 
-	// ---- Make sure camera is focused on the center of the model
-
-	if (sceneState.centerRequest) {
-		const box = new THREE.Box3().setFromObject(scene.getObjectByName('furniture-model')).getSize();
-		controls.target = new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0);
-		camera.lookAt(new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0));
-		sceneState.centerRequest = false;
-	}
-
-	// --- model change
-	if (sceneState.modelChange.new) {
-		changeModel(sceneState.modelChange.index, scene, renderer);
-		sceneState.modelChange.new = false;
-	}
 
 	//---- loading notification
-	if (sceneState.loading.is && !sceneState.loading.notified) {
+	if (modelInstance.loading.is && !modelInstance.loading.notified) {
 		document.getElementById('webgl').appendChild(loader);
-		sceneState.loading.notified = true;
-		controls.enabled = false;
-	} else if (!sceneState.loading.is && sceneState.loading.notified) {
+		modelInstance.loading.notified = true;
+		// controls.enabled = false;
+	} else if (!modelInstance.loading.is && modelInstance.loading.notified) {
 		document.getElementById('loader').remove();
-		sceneState.loading.notified = false;
-		controls.enabled = true;
-	}
-
-
-
-	// texture change
-	if (sceneState.swatchChange.new) {
-		swatchHandler(sceneState.swatchChange.texture, scene);
-		sceneState.swatchChange.new = false;
+		modelInstance.loading.notified = false;
+		// controls.enabled = true;
 	}
 
 
@@ -169,6 +149,11 @@ function update(renderer, scene, camera, controls, clock, stats, flLight, frLigh
 	})
 }
 
+
+
+
+// start
+init();
 
 
 

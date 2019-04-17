@@ -27,143 +27,232 @@ function createPlane(size, color, roughness) {
 	return mesh;
 }
 
-function getSphere(size) {
-	// create box
-	let geometry = new THREE.SphereGeometry(size, 24, 24);
-	let material = new THREE.MeshBasicMaterial({
-		color: 'rgb(255, 255, 255)'
-	});
-	material.fog = false;
-	let mesh = new THREE.Mesh(
-		geometry,
-		material
-	);
-	return mesh;
-}
+// 3D Model handler
+class ModelHandler {
+	constructor() {
+		this.object = null;
+		this.textures = {};
+		this.staticTextures = [];
+		this.materials = {};
+		this.index = 1;
+		this.data = modelData;
+		this.loading = {
+			is: true,
+			notified: false,
+		};
+		this.swatch = this.data[this.index].textures.default;
+		this.options = this.data[this.index];
+		this.materials = {};
+	}
 
-// create 3d  model
-function buildModel() {
-	return new Promise((resolve, reject) => {
+	initTextures(model) {
 
+		const data = this.data;
+		const i = this.index;
+		const textures = this.data[i].textures;
+		const targets = this.data[i].targets;
+		const loader = new THREE.TextureLoader();
 
-		modelLoader.load(modelData[sceneState.modelIndex].path + modelData[sceneState.modelIndex].modelFile, function(obj) {
-			obj.scale.x = sceneSettings.modelScale;
-			obj.scale.y = sceneSettings.modelScale;
-			obj.scale.z = sceneSettings.modelScale;
-			obj.position.z = 0;
-			obj.position.y = 0;
-
-
-			let texturedModel = initTextures(obj);
-
-			// obj.castShadow = true;
-			texturedModel.name = "furniture-model";
-			resolve(texturedModel);
-			// scene.add(obj);
-		})
-	})
-}
-
-
-// init Model textures
-function initTextures(model) {
-	const i = sceneState.modelIndex;
-	const textures = modelData[i].textures;
-	const defaultTexture = textures[textures.default];
-	const targets = modelData[i].targets;
-	let staticTextures = [];
-	const loader = new THREE.TextureLoader();
-	
-
-	// load all textures into scene(prevents pop in when changing textures)
-	Object.keys(textures).forEach(textID => {
-		sceneSettings.maps.forEach(map => {
-			if (modelData[i].textures[textID][map]) {
-				if (typeof sceneState.textures[textID] == "undefined") sceneState.textures[textID] = {};
-				sceneState.textures[textID][map] = loader.load( modelData[i].path + modelData[i].textures[textID][map] );
-			}
-		})
-	});
+		// load all textures into scene(prevents pop in when changing textures)
+		Object.keys(textures).forEach(textID => {
+			sceneSettings.maps.forEach(map => {
+				if (textures[textID][map]) {
+					if (typeof this.textures[textID] == "undefined") this.textures[textID] = {};
+					this.textures[textID][map] = loader.load( this.data[i].path + textures[textID][map] );
+				}
+			})
+		});
 
 
-	// find any set sttatic textures
-	Object.keys(targets).forEach(targetID => {
-		if (targets[targetID].static) {
-			staticTextures.push({
+		// find any set sttatic textures
+		const statics = Object.keys(targets).filter(targetID => targets[targetID].static);
+		if (statics.length) {
+			statics.forEach(targetID => this.staticTextures.push({
 				id: targetID,
 				objects: targets[targetID].objects
-			});
-
+			}))
 		}
-	})
-	// material
-	// let material = new THREE.MeshPhysicalMaterial({
-	// 	color: '#fff'
-	// })
-	// sceneState.materials.push(material)
-	Object.keys(modelData[sceneState.modelIndex].targets).forEach(target => {
-		console.log(target);
-		sceneState.materials[target] = new THREE.MeshPhysicalMaterial({color:'#fff'});
-		console.log(sceneState.materials)
-	})
 
-	// apply textures
-	model.traverse(child => {
-		console.log(child)
-		console.log(child.name)
-		let name = child.name;
-		let applyTexture = defaultTexture;
-		let textDataID = textures.default;
-		
-		// change texture for static children
-		staticTextures.forEach(st => {
-			if (st.objects.includes(name)) {
-				Object.keys(textures).forEach(textID => {
-					if (textures[textID].target == st.id) {
-						applyTexture = textures[textID];
-						textDataID = textID; 
-					}
-				});
-			}
+		// create materials for different material children
+		Object.keys(this.data[this.index].targets).forEach(target => {
+			this.materials[target] = new THREE.MeshPhysicalMaterial({color:'#fff'});
 		})
 
-		const materialCopy = sceneState.materials[applyTexture.target];
-		console.log(materialCopy)
-
-		let isTextureTarget = targets[applyTexture.target].objects.includes(name);
-		// handle dynamic
-		if (targets[applyTexture.target].objects.includes(name) && isTextureTarget) {
-			child.material = materialCopy;
-			sceneSettings.maps.forEach(map => {
-				if (applyTexture[map]) {
-					materialCopy[map] = sceneState.textures[textDataID][map];
-					materialCopy[map].wrapS = THREE.RepeatWrapping;
-					materialCopy[map].wrapT = THREE.RepeatWrapping;
-					materialCopy[map].repeat.set(applyTexture.wrapS, applyTexture.wrapT)
+		// apply textures
+		model.traverse(child => {
+			let name = child.name;
+			let applyTexture = textures[this.swatch];
+			let textDataID = this.swatch;
+			
+			// change texture for static children
+			this.staticTextures.forEach(st => {
+				if (st.objects.includes(name)) {
+					Object.keys(textures).forEach(textID => {
+						if (textures[textID].target == st.id) {
+							applyTexture = textures[textID];
+							textDataID = textID; 
+						}
+					});
 				}
+			})
 
-			})
-		}
-		// apply style properties to material
-		if (applyTexture.styles && isTextureTarget) {
-			Object.keys(applyTexture.styles).forEach(property => {
-				materialCopy[property] = applyTexture.styles[property];
-			})
-		}
-		//global object styles/settings
-		if (modelData[i].objectSettings["*"]) {
-			Object.keys(modelData[i].objectSettings["*"]).forEach(property => {
-				child[property] = modelData[i].objectSettings["*"][property];
-			})
-		}
-		// object specific settings/styles
-		if (modelData[i].objectSettings && Object.keys(modelData[i].objectSettings).includes(name)) {
-			Object.keys(modelData[i].objectSettings[name]).forEach(property => {
-				child[property] = modelData[i].objectSettings[name][property];
-			})
-		}
-	})
+			// let materialCopy = this.materials[applyTexture.target];
+			let isTextureTarget = targets[applyTexture.target].objects.includes(name);
+			// handle dynamic
+			if (isTextureTarget) {
+				child.material = this.materials[applyTexture.target];
+				sceneSettings.maps.forEach(map => {
+					if (applyTexture[map]) {
+						child.material[map] = this.textures[textDataID][map];
+						child.material[map].wrapS = THREE.RepeatWrapping;
+						child.material[map].wrapT = THREE.RepeatWrapping;
+						child.material[map].repeat.set(applyTexture.wrapS, applyTexture.wrapT)
+					}
 
-	return model;
+				})
+			}
+
+			// apply style properties to material
+			if (applyTexture.styles && isTextureTarget) 
+				Object.keys(applyTexture.styles).forEach(property => child.material[property] = applyTexture.styles[property] );
+
+			// settings
+			const settings = this.data[i].objectSettings;
+
+			//global object styles/settings
+			if (settings["*"]) 
+				Object.keys(settings["*"]).forEach(property => child[property] = settings["*"][property] );
+
+			// object specific settings/styles
+			if (settings && Object.keys(settings).includes(name)) 
+				Object.keys(settings[name]).forEach(property => child[property] = settings[name][property] );
+		})
+
+		return model;
+	}
+
+	createModel() {
+		let module = this;
+		const data = this.data;
+		const index = this.index;
+		this.loading.is = true;
+		return new Promise((resolve, reject) => {
+			const loader = new THREE.OBJLoader();
+			loader.load(data[index].path + data[index].modelFile, function(obj) {
+				obj.scale.x = sceneSettings.modelScale;
+				obj.scale.y = sceneSettings.modelScale;
+				obj.scale.z = sceneSettings.modelScale;
+				obj.position.z = 0;
+				obj.position.y = 0;
+
+				module.object = module.initTextures(obj);
+
+				let box = new THREE.Box3().setFromObject(module.object).getSize(new THREE.Vector3());
+				module.controls.target = new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0);
+				box = null;
+
+				module.object.name = "furniture-model";
+				module.scene.add(module.object);
+				clearLoading();
+				resolve();
+			})
+		})
+	}
+
+	changeModel(index) {
+		console.log(this.renderer.info)
+		this.index = index;
+		const scene = this.scene;
+		this.staticTextures = [];
+		this.swatch = this.data[this.index].textures.default;
+		this.options = this.data[this.index];
+		scene.getObjectByName('furniture-model').children.forEach(child => {
+			child.remove();
+			child.material.dispose();
+			child.geometry.dispose();
+			sceneSettings.maps.forEach(map => {
+				if (child.material[map]) child.material[map].dispose();
+			})
+		})
+		scene.remove(scene.getObjectByName('furniture-model'));
+		// textures
+		Object.keys(this.textures).forEach(textID => {
+			sceneSettings.maps.forEach(map => {
+				if (this.textures[textID][map]) {
+					this.textures[textID][map].dispose();
+					this.textures[textID][map] = null;
+					// delete this.textures[textID][map];
+				}
+			})
+		})
+		// material
+		Object.keys(this.materials).forEach(mattID => {
+			this.materials[mattID].dispose();
+			sceneSettings.maps.forEach(map => {
+				if (this.materials[mattID][map]) this.materials[mattID][map].dispose();
+			})
+			this.materials[mattID] = null;
+			// delete this.materials[mattID];
+		})
+		// objects
+		this.object = null;
+		this.textures = {};
+		this.materials = {};
+		this.generateSwatchButtons();
+		this.createModel();
+	}
+
+	changeSwatch(swatchID) {
+		let texture = this.data[this.index].textures[swatchID];
+		const targets = this.data[this.index].targets[texture.target].objects;
+		targets.forEach(target => {
+			let obj = this.scene.getObjectByName(target);
+			sceneSettings.maps.forEach(map => {
+				if (texture[map]) {
+					obj.material[map] = this.textures[swatchID][map];
+					obj.material[map].wrapS = THREE.RepeatWrapping;
+					obj.material[map].wrapT = THREE.RepeatWrapping;
+					obj.material[map].repeat.set(texture.wrapS, texture.wrapT)
+				}
+			})
+			// apply style properties to material
+			if (texture.styles) {
+				Object.keys(texture.styles).forEach(property => {
+					obj.material[property] = texture.styles[property];
+				})
+			}
+		})
+		this.swatch = swatchID;
+	}
+
+	generateSwatchButtons() {
+		const element = document.getElementById('swatch-controls');
+		// clean up on change
+		if (element.children.length) {
+			for (let i = 0;i < element.children.length;i++) {
+				element.children[i].removeEventListener('click', swatchEvent);
+			}
+		}
+		element.innerHTML = "";
+		// generate
+		Object.keys(this.data[this.index].textures).forEach(textID => {
+			let texture = this.data[this.index].textures[textID];
+			if (textID !== "default" && texture.selectable) {
+				let button = document.createElement('button');
+				button.addEventListener('click', e => swatchEvent(textID))
+				button.style.background = "url("+ this.data[this.index].path + texture.map + ") no-repeat center";
+				button.style.backgroundSize = "cover";
+				element.appendChild(button);
+			}
+		})
+	}
+
+	centerCamera() {
+		const warnFix = new THREE.Vector3();
+		const box = new THREE.Box3().setFromObject(this.object).getSize(warnFix);
+		this.controls.target = new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0);
+		this.camera.lookAt(new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0));
+	}
+
 
 }

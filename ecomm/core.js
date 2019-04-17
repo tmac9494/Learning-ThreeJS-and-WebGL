@@ -1,23 +1,4 @@
 // tracks state of application
-let sceneState = {
-	centerRequest: true,
-	swatchChange: {
-		new: false,
-		texture: null,
-	},
-	modelChange: {
-		new: false,
-		index: null,
-	},
-	loading: {
-		is: true,
-		notified: false,
-	},
-	modelIndex:2, 
-	textures: {},
-	materials: [],
-}
-
 // controls defaults 
 const sceneSettings = {
 	modelScale: 1,
