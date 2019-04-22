@@ -27,6 +27,7 @@ function createPlane(size, color, roughness) {
 	return mesh;
 }
 
+// texture options manager
 class textureHandler {
 	constructor(model, swatch, statics) {
 		this.textures = {};
@@ -108,7 +109,7 @@ class textureHandler {
 
 		}) // end trverse
 		return this.model;
-		this.model = null;
+		delete this.model;
 	}
 
 	changeSwatch(swatchID) {
@@ -137,30 +138,29 @@ class textureHandler {
 	}
 
 	cleanup() {
-
 		// textures
 		Object.keys(this.textures).forEach(textID => {
 			sceneSettings.maps.forEach(map => {
 				if (this.textures[textID][map]) {
 					this.textures[textID][map].dispose();
-					this.textures[textID][map] = "";
 					delete this.textures[textID][map];
 					console.log('-------- texture dropped - ' + textID + ' -- ' + map);
 				}
 			})
+			delete this.textures[textID];
 		})
 		// material
 		Object.keys(this.materials).forEach(mattID => {
-			this.materials[mattID].dispose();
 			sceneSettings.maps.forEach(map => {
 				if (this.materials[mattID][map]) this.materials[mattID][map].dispose();
+				delete this.materials[mattID][map];
 			})
-			this.materials[mattID] = "";
+			this.materials[mattID].dispose();
 			delete this.materials[mattID];
 		})
+		delete this.textures;
+		delete this.materials;
 	}
-
-
 }
 
 // 3D Model handler
@@ -169,7 +169,6 @@ class ModelHandler {
 		this.object = null;
 		this.textures = {};
 		this.staticTextures = [];
-		this.materials = {};
 		this.index = 1;
 		this.data = modelData;
 		this.loading = {
@@ -208,82 +207,55 @@ class ModelHandler {
 		const data = this.data;
 		const index = this.index;
 		this.loading.is = true;
-		// return new Promise((resolve, reject) => {
-			// const loader = new THREE.OBJLoader();
-			this.loader.load(data[index].path + data[index].modelFile, function(obj) {
-				console.log('-------- model loaded - ' + data[index].modelFile)
-				obj.scale.x = sceneSettings.modelScale;
-				obj.scale.y = sceneSettings.modelScale;
-				obj.scale.z = sceneSettings.modelScale;
-				obj.position.z = 0;
-				obj.position.y = 0;
+		return this.loader.load(data[index].path + data[index].modelFile, function(obj) {
+			console.log('-------- model loaded - ' + data[index].modelFile)
+			module.object = module.initTextures(obj);
+			module.object.scale.x = sceneSettings.modelScale;
+			module.object.scale.y = sceneSettings.modelScale;
+			module.object.scale.z = sceneSettings.modelScale;
+			module.object.position.z = 0;
+			module.object.position.y = 0;
 
-				module.object = module.initTextures(obj);
 
-				let box = new THREE.Box3().setFromObject(module.object).getSize(new THREE.Vector3());
-				module.controls.target = new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0);
-				box = null;
+			let box = new THREE.Box3().setFromObject(module.object).getSize(new THREE.Vector3());
+			module.controls.target = new THREE.Vector3(0, (box.y / 1.5) * sceneSettings.modelScale, 0);
+			box = null;
 
-				module.object.name = "furniture-model";
-				module.scene.add(module.object);
-				module.centerCamera();
-				module.generateSwatchButtons();
-				clearLoading();
-				// resolve();
-			})
-		// })
+			module.object.name = "furniture-model";
+			module.scene.add(module.object);
+			module.renderer.shadowMap.needsUpdate = true;
+			module.centerCamera();
+			generateSwatchButtons();
+			clearLoading();
+		})
 	}
 
 	changeModel(index) {
-		// console.log(this.renderer.info)
 		this.index = index;
 		const scene = this.scene;
-		// this.staticTextures = [];
 		this.swatch = this.data[this.index].textures.default;
 		this.options = this.data[this.index];
-		this.object.remove();
-		scene.getObjectByName('furniture-model').children.forEach(child => {
+		// this.object.remove();
+		scene.remove(this.object);
+		this.object.children.forEach(child => {
 			child.remove();
+			scene.remove(child);
 			child.material.dispose();
 			child.geometry.dispose();
 			sceneSettings.maps.forEach(map => {
 				if (child.material[map]) child.material[map].dispose();
 			})
 		})
-		scene.remove(scene.getObjectByName('furniture-model'));
+		this.renderer.shadowMap.needsUpdate = true;
 
 		this.textureHandler.cleanup();
-		this.object = "";
 		delete this.object;
 		console.log('-------- model dropped - ' + this.data[index].modelFile)
-		this.textureHandler.model = "";
-		this.textureHandler.textures = "";
-		this.textureHandler = "";
+		delete this.textureHandler.model;
+		delete this.textureHandler.textures;
+		delete this.textureHandler.materials;
 		delete this.textureHandler;
-		this.generateSwatchButtons();
 		this.createModel();
-	}
-
-	generateSwatchButtons() {
-		const element = document.getElementById('swatch-controls');
-		// clean up on change
-		if (element.children.length) {
-			for (let i = 0;i < element.children.length;i++) {
-				element.children[i].removeEventListener('click', swatchEvent);
-			}
-		}
-		element.innerHTML = "";
-		// generate
-		Object.keys(this.data[this.index].textures).forEach(textID => {
-			let texture = this.data[this.index].textures[textID];
-			if (textID !== "default" && texture.selectable) {
-				let button = document.createElement('button');
-				button.addEventListener('click', e => swatchEvent(textID))
-				button.style.background = "url("+ this.data[this.index].path + texture.map + ") no-repeat center";
-				button.style.backgroundSize = "cover";
-				element.appendChild(button);
-			}
-		})
 	}
 
 	centerCamera() {
