@@ -7,13 +7,13 @@ function centerCamera() {
 function clearLoading() {
 	setTimeout(() => {
 		modelInstance.loading.is = false;
-	}, 500)
+	}, 1500)
 }
 
 
 function swatchEvent(textID) {
-	if (modelInstance.swatch !== textID && !modelInstance.loading.is) 
-		modelInstance.changeSwatch(textID);
+	if (modelInstance.textureHandler.swatch !== textID && !modelInstance.loading.is) 
+		modelInstance.textureHandler.changeSwatch(textID);
 }
 
 

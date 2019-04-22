@@ -110,11 +110,12 @@ function init() {
 	modelInstance.camera = camera;
 	modelInstance.renderer = renderer;
 	// load Model
-	modelInstance.createModel().then(() => {
-		modelInstance.centerCamera();
-		modelInstance.generateSwatchButtons();
+	modelInstance.createModel();
+	// modelInstance.createModel().then(() => {
+		// modelInstance.centerCamera();
+		// modelInstance.generateSwatchButtons();
 		update(renderer, scene, camera, controls, clock, perfStats, flLight, frLight, bLight);
-	})
+	// })
 
 
 	return scene;

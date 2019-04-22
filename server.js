@@ -2,7 +2,7 @@ var express = require('express')
 var app = express()
 const bodyParser = require('body-parser');
 const path = require('path');
-const PORT = 3010;
+const PORT = 3011;
 
 app.use(express.static(`${__dirname}`))
 app.use('/assets', express.static(`${__dirname}/assets/`));
