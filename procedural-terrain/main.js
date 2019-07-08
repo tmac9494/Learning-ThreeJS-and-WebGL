@@ -10,7 +10,20 @@ const perlin = {
 const settings = {
 	speed: 0.03,
 	scale: 70,
+	river: {
+		position: 105,
+		min: function() {
+			return this.position - 15;
+		},
+		max: function() {
+			return this.position + 15;
+		}
+	},
 }
+
+// let riverMove = setInterval(() => {
+// 	settings.river.position++;
+// }, 250)
 
 const h = 4200;
 const w = h * 7;
@@ -110,13 +123,30 @@ function update(renderer, scene, camera, clock, controls) {
 	const plane = scene.getObjectByName('terrain');
 
 	// update vertices to appear to moving forward
+	// let yOff = flying;
+	// for(let y = 0;y < rows;y++) {
+	// 	let xOff = 0;
+	// 	for(let x = 0;x < cols;x++) {
+	// 		const vertexVal = noise.simplex2(xOff, yOff) * perlin.scale;
+	// 		terrain[x][y] = vertexVal;
+	// 		xOff += perlin.increment;
+	// 	}
+	// 	yOff += perlin.increment;
+	// }
+
+	//river
+	const river = settings.river;
+
 	let yOff = flying;
 	for(let y = 0;y < rows;y++) {
 		let xOff = 0;
+		let customX, customY = null;
 		for(let x = 0;x < cols;x++) {
-			const vertexVal = noise.simplex2(xOff, yOff) * perlin.scale;
+			let customX, customY = null;
+			if (x > river.min() && x < river.max()) { customX = xOff - (xOff / 2);customY = yOff * 2.5;  }
+			const vertexVal = noise.simplex2(customX || xOff, customY || yOff) * (customX ? 20 : perlin.scale);
 			terrain[x][y] = vertexVal;
-			xOff += perlin.increment;
+			xOff += (customX ? 150 : perlin.increment);
 		}
 		yOff += perlin.increment;
 	}
@@ -125,8 +155,8 @@ function update(renderer, scene, camera, clock, controls) {
 	for(let y = 0;y < rows - 1;y++) {
 		for(let x = 0;x < cols;x++) {
 			let adjustedX = x * 2;
-			plane.children[y].geometry.vertices[adjustedX].z = terrain[x][y];
-			plane.children[y].geometry.vertices[adjustedX + 1].z = terrain[x][y + 1];
+			plane.children[y].geometry.vertices[adjustedX].z = terrain[x][y] - (x > river.min() && x < river.max() ? 100 : 0);
+			plane.children[y].geometry.vertices[adjustedX + 1].z = terrain[x][y + 1] - (x > river.min() && x < river.max() ? 100 : 0);
 
 			plane.children[y].geometry.vertices[adjustedX].x = x * settings.scale;
 			plane.children[y].geometry.vertices[adjustedX + 1].x = x * settings.scale;
